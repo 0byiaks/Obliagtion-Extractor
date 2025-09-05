@@ -44,7 +44,7 @@ async def extract(
     return {
         "mode": "text",
         "length": len(cleaned),
-        "preview": cleaned[:200],
+        "preview": cleaned[:300],
     }
 
 
