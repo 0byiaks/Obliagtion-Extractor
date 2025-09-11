@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
@@ -23,12 +24,12 @@ export default function UploadPage() {
     if (file) {
       formData.append('file', file)
     } else if (text.trim()) {
-      formData.append('contract_text', text.trim())
+      formData.append('text', text.trim())
     }
 
     try {
       setLoading(true)
-      const res = await fetch('http://127.0.0.1:8000/extract-obligations', {
+      const res = await fetch('http://127.0.0.1:8000/ingest', {
         method: 'POST',
         body: formData,
       })
@@ -48,9 +49,28 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-start justify-center p-6">
-      <div className="w-full max-w-2xl space-y-6">
-        <h1 className="text-2xl font-semibold">Upload contract or paste text</h1>
+    <div className="min-h-screen w-full">
+      {/* Navigation */}
+      <nav className="border-b bg-white">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold text-blue-600">
+            Obligation Extractor
+          </Link>
+          <div className="flex items-center space-x-4">
+            <Link href="/" className="text-gray-600 hover:text-gray-900">
+              Home
+            </Link>
+            <Link href="/upload" className="text-blue-600 font-medium">
+              Upload
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="flex items-start justify-center p-6">
+        <div className="w-full max-w-2xl space-y-6">
+          <h1 className="text-2xl font-semibold">Upload contract or paste text</h1>
         <form onSubmit={handleSubmit} className="space-y-4 border rounded-xl p-4">
           <div className="space-y-2">
             <label className="block text-sm font-medium">File (PDF/DOCX)</label>
@@ -95,15 +115,64 @@ export default function UploadPage() {
           )}
         </form>
 
-        <div className="space-y-2">
-          <h2 className="text-lg font-medium">Response</h2>
-          <div className="rounded-xl border p-4 bg-gray-50 overflow-auto">
-            {result ? (
-              <pre className="text-sm whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
-            ) : (
-              <p className="text-sm text-gray-600">Submit a file or text to see the backend response.</p>
+        {result && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium">Processing Results</h2>
+            
+            {/* Document Info */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="text-sm text-blue-600 font-medium">Mode</div>
+                <div className="text-lg font-semibold">{result.mode}</div>
+              </div>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <div className="text-sm text-green-600 font-medium">Sections</div>
+                <div className="text-lg font-semibold">{result.sections}</div>
+              </div>
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <div className="text-sm text-purple-600 font-medium">Chunks</div>
+                <div className="text-lg font-semibold">{result.clauses}</div>
+              </div>
+              <div className="bg-orange-50 p-3 rounded-lg">
+                <div className="text-sm text-orange-600 font-medium">Characters</div>
+                <div className="text-lg font-semibold">{result.char_count?.toLocaleString()}</div>
+              </div>
+            </div>
+
+            {/* Preview */}
+            {result.preview && (
+              <div className="space-y-2">
+                <h3 className="text-md font-medium">Document Preview</h3>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-700">{result.preview}</p>
+                </div>
+              </div>
             )}
+
+            {/* Chunks */}
+            {result.chunks && result.chunks.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-md font-medium">Document Chunks ({result.chunks.length})</h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {result.chunks.map((chunk: string, index: number) => (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg border">
+                      <div className="text-xs text-gray-500 mb-1">Chunk {index + 1}</div>
+                      <p className="text-sm text-gray-700">{chunk.substring(0, 200)}{chunk.length > 200 ? '...' : ''}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Raw Response */}
+            <details className="space-y-2">
+              <summary className="text-md font-medium cursor-pointer">Raw Response</summary>
+              <div className="rounded-xl border p-4 bg-gray-50 overflow-auto">
+                <pre className="text-sm whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
+              </div>
+            </details>
           </div>
+        )}
         </div>
       </div>
     </div>
