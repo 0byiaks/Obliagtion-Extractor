@@ -3,31 +3,35 @@ Data models for legal document processing
 """
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
-from enum import Enum
-
-
-class ClauseLevel(Enum):
-    """Hierarchical levels for legal document clauses"""
-    MAIN_SECTION = "main_section"
-    PRIMARY_SUBSECTION = "primary_subsection" 
-    SECONDARY_SUBSECTION = "secondary_subsection"
-    TERTIARY_SUBSECTION = "tertiary_subsection"
-    ALPHABETICAL = "alphabetical"
-    ROMAN_NUMERAL = "roman_numeral"
 
 
 @dataclass
-class Clause:
-    """Represents a legal document clause with metadata"""
-    clause_id: str
-    clause_number: Optional[str]
-    text: str
-    heading: Optional[str]
-    level: ClauseLevel
-    section_id: str
-    section_heading: str
-    start_char: int = 0
-    end_char: int = 0
+class Obligation:
+    """Represents an extracted obligation from a legal document"""
+    party: str
+    action: str
+    trigger: Optional[str] = None
+    deadline: Optional[str] = None
+    amount: Optional[str] = None
+    confidence: float = 0.0
+    source_text: str = ""
+    section_id: str = ""
+    clause_id: str = ""
+    metadata: Optional[Dict[str, Any]] = None
+    
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+
+
+@dataclass
+class ExtractionStats:
+    """Statistics about the extraction process"""
+    total_clauses: int = 0
+    prefilter_kept: int = 0
+    classifier_positive: int = 0
+    obligations_found: int = 0
+    processing_time_ms: int = 0
     metadata: Optional[Dict[str, Any]] = None
     
     def __post_init__(self):

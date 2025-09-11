@@ -3,3 +3,9 @@ uvicorn
 python-docx
 pydantic
 spacy
+openai
+python-dotenv
+python-multipart
+pytest
+pytest-asyncio
+httpx

@@ -3,7 +3,7 @@ from io import BytesIO
 from typing import Tuple
 from docx import Document
 
-SUPPORTED_EXTS = {".docx"}
+SUPPORTED_EXTS = {".docx", ".txt", ".pdf"}
 
 class IngestError(Exception):
     pass
@@ -66,9 +66,25 @@ def _docx_to_text(file_bytes: bytes) -> str:
     # Join with newlines to keep light structure; later stages can pre-chunk by lines/blank lines
     return "\n".join(lines)
 
+def _txt_to_text(file_bytes: bytes) -> str:
+    """Parse plain text file"""
+    try:
+        text = file_bytes.decode('utf-8')
+        return text
+    except UnicodeDecodeError:
+        try:
+            text = file_bytes.decode('latin-1')
+            return text
+        except UnicodeDecodeError:
+            raise IngestError("Unable to decode text file - unsupported encoding")
+
+def _pdf_to_text(file_bytes: bytes) -> str:
+    """Parse PDF file - placeholder implementation"""
+    raise IngestError("PDF parsing not yet implemented. Please convert to .docx or .txt format.")
+
 def to_text(file_bytes: bytes, filename: str) -> Tuple[str, str]:
     """
-    Returns (text, detected_type). For now, only .docx is supported.
+    Returns (text, detected_type). Supports .docx, .txt, and .pdf files.
     Raise IngestError on unsupported or parsing failure.
     """
     lname = filename.lower().strip()
@@ -84,5 +100,18 @@ def to_text(file_bytes: bytes, filename: str) -> Tuple[str, str]:
             return text, "docx"
         except Exception as e:
             raise IngestError(f"Failed to parse .docx: {e}")
+    elif ext == ".txt":
+        try:
+            text = _txt_to_text(file_bytes)
+            return text, "txt"
+        except Exception as e:
+            raise IngestError(f"Failed to parse .txt: {e}")
+    elif ext == ".pdf":
+        try:
+            text = _pdf_to_text(file_bytes)
+            return text, "pdf"
+        except Exception as e:
+            raise IngestError(f"Failed to parse .pdf: {e}")
     else:
-        raise IngestError(f"Unsupported file type for demo: {filename}. Supported: .docx")
+        supported_list = ", ".join(SUPPORTED_EXTS)
+        raise IngestError(f"Unsupported file type: {filename}. Supported: {supported_list}")
