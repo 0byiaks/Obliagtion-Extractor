@@ -1,191 +1,253 @@
 # Obligation Extractor
 
-A tool for extracting and analyzing obligations from text documents and contracts.
+A full-stack application for extracting and analyzing obligations from legal documents using advanced NLP techniques.
 
 ## Overview
 
-The Obligation Extractor is designed to automatically identify, extract, and categorize obligations from various types of documents including contracts, legal agreements, and policy documents. It uses natural language processing and machine learning techniques to accurately identify obligation-related content.
+The Obligation Extractor is a complete system designed to automatically identify, extract, and analyze obligations from legal documents including contracts, agreements, and policy documents. The system uses spaCy-based natural language processing to segment legal documents into clauses and intelligently filter for obligation-related content, reducing processing costs while maintaining high accuracy.
 
-## Features
+## Architecture
 
-- **Text Processing**: Extract obligations from plain text, PDF, and document files
-- **Obligation Classification**: Categorize obligations by type (e.g., payment, delivery, compliance)
-- **Entity Recognition**: Identify parties, dates, and key terms in obligations
-- **Export Capabilities**: Export extracted obligations in various formats (JSON, CSV, Excel)
-- **API Integration**: RESTful API for programmatic access
-- **Web Interface**: User-friendly web interface for document upload and analysis
+This is a full-stack application consisting of:
+
+- **Backend**: FastAPI-based REST API with NLP-powered document processing
+- **Frontend**: Next.js 15 web application with React 19 and TypeScript
+- **Processing Pipeline**: Multi-stage document analysis with intelligent pre-filtering
+
+## Key Features
+
+### Document Processing
+- **Multi-format Support**: Process PDF, DOCX, and plain text files
+- **Intelligent Segmentation**: NLP-based legal document segmentation using spaCy
+- **Pre-filtering System**: Cost-effective clause filtering to identify obligation candidates before expensive LLM processing
+- **Entity Extraction**: Automatic identification of parties, dates, monetary amounts, and legal entities
+- **Pattern Recognition**: Detection of legal patterns including obligations, prohibitions, and definitions
+
+### API Endpoints
+- **POST /extract**: Extract obligations from uploaded files or text input with pre-filtering
+- **POST /ingest**: Ingest and segment documents without obligation filtering
+- **GET /ping**: Health check endpoint
+
+### Web Interface
+- **Modern UI**: Built with Next.js 15, React 19, and Tailwind CSS
+- **Document Upload**: Drag-and-drop file upload or direct text input
+- **Results Visualization**: Display of extracted clauses, statistics, and metadata
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+## Technology Stack
+
+### Backend
+- **FastAPI**: Modern, fast web framework for building APIs
+- **spaCy**: Advanced NLP library for legal document processing
+- **python-docx**: DOCX file parsing
+- **Uvicorn**: ASGI server for FastAPI
+- **Pydantic**: Data validation and settings management
+
+### Frontend
+- **Next.js 15**: React framework with App Router
+- **React 19**: Latest React features
+- **TypeScript**: Type-safe development
+- **Tailwind CSS 4**: Modern utility-first CSS framework
+
+### Testing
+- **pytest**: Comprehensive test suite
+- **pytest-asyncio**: Async test support
+- **httpx**: HTTP client for API testing
+
+## Project Structure
+
+The project is organized into clear backend and frontend directories:
+
+**Backend Structure:**
+- `api/routes/`: API endpoint definitions (extract, ingest, health)
+- `services/`: Core processing services
+  - `clause_segmenter/`: Legal document segmentation with NLP
+  - `ingest/`: Document parsing and text extraction
+  - `llm/`: LLM integration for advanced processing
+  - `postprocess/`: Result normalization and validation
+- `models/`: Data models and schemas
+- `core/`: Configuration and logging
+- `utils/`: Utility functions
+- `tests/`: Comprehensive test suite
+
+**Frontend Structure:**
+- `src/app/`: Next.js App Router pages
+  - `page.tsx`: Home page with feature overview
+  - `upload/page.tsx`: Document upload and processing interface
+- `public/`: Static assets
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.8 or higher
-- pip (Python package installer)
+- Node.js 18 or higher
+- npm or yarn package manager
+- spaCy English model (automatically downloaded on first run)
 
-### Installation
+### Backend Setup
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/obligation-extractor.git
-cd obligation-extractor
-```
+1. Navigate to the backend directory
+2. Create a virtual environment
+3. Activate the virtual environment
+4. Install Python dependencies from requirements.txt
+5. Download spaCy English model if not already installed
+6. Start the FastAPI server using uvicorn
 
-2. Create a virtual environment (recommended):
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+The backend API will be available at `http://localhost:8000` by default.
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+### Frontend Setup
 
-### Usage
+1. Navigate to the frontend directory
+2. Install Node.js dependencies using npm or yarn
+3. Start the development server
 
-#### Command Line Interface
+The frontend application will be available at `http://localhost:3000` by default.
 
-```bash
-# Extract obligations from a text file
-python extractor.py --input document.txt --output obligations.json
+## How It Works
 
-# Extract from multiple files
-python extractor.py --input-dir ./documents --output-dir ./results
+### Document Processing Pipeline
 
-# Use specific extraction model
-python extractor.py --input document.txt --model legal --output obligations.json
-```
+1. **Ingestion**: Documents are parsed to extract text content (PDF, DOCX, or TXT)
+2. **Segmentation**: Legal document segmenter uses spaCy NLP to identify clauses, sections, and subsections
+3. **NLP Analysis**: Each clause is analyzed for:
+   - Named entities (parties, dates, amounts)
+   - Obligation verbs (shall, must, agrees to, etc.)
+   - Legal patterns (obligations, prohibitions, definitions)
+   - Confidence scoring
+4. **Pre-filtering**: Intelligent filtering system identifies clauses likely to contain obligations based on:
+   - Presence of obligation verbs
+   - Monetary amounts
+   - Deadlines and timeframes
+   - Section context
+   - Negative signals (definitions, recitals)
+5. **Results**: Filtered clauses are returned with metadata, statistics, and confidence scores
 
-#### Python API
+### Pre-filtering System
 
-```python
-from obligation_extractor import ObligationExtractor
+The pre-filtering system uses heuristic-based scoring to identify obligation candidates before expensive LLM processing. This significantly reduces costs while maintaining high accuracy. The system:
 
-# Initialize extractor
-extractor = ObligationExtractor()
+- Scores clauses based on positive signals (obligation verbs, monetary amounts, deadlines)
+- Penalizes non-obligation content (definitions, recitals, short clauses)
+- Provides confidence levels (high, medium, low)
+- Configurable threshold for filtering decisions
 
-# Extract obligations from text
-text = "The supplier shall deliver the goods within 30 days."
-obligations = extractor.extract(text)
+## API Usage
 
-# Process results
-for obligation in obligations:
-    print(f"Type: {obligation.type}")
-    print(f"Subject: {obligation.subject}")
-    print(f"Deadline: {obligation.deadline}")
-```
+### Extract Endpoint
 
-#### Web Interface
+The `/extract` endpoint processes documents and returns obligation clauses with pre-filtering applied. You can submit either a file upload or text input. The response includes:
 
-1. Start the web server:
-```bash
-python app.py
-```
+- Document metadata (filename, character count, preview)
+- Filtered clauses with NLP analysis
+- Processing statistics (total clauses, filtered count, filter rate, confidence distribution)
 
-2. Open your browser and navigate to `http://localhost:5000`
-3. Upload your document and view extracted obligations
+### Ingest Endpoint
 
-## Configuration
-
-Create a `config.yaml` file to customize extraction settings:
-
-```yaml
-models:
-  default: "general"
-  legal: "legal_specialized"
-  
-extraction:
-  confidence_threshold: 0.8
-  max_obligations: 100
-  
-output:
-  format: "json"
-  include_metadata: true
-```
-
-## API Reference
-
-### REST API Endpoints
-
-- `POST /api/extract` - Extract obligations from uploaded text
-- `GET /api/models` - List available extraction models
-- `GET /api/health` - Health check endpoint
-
-### Request Format
-
-```json
-{
-  "text": "Document text content",
-  "model": "general",
-  "options": {
-    "confidence_threshold": 0.8,
-    "include_metadata": true
-  }
-}
-```
-
-## Project Structure
-
-```
-obligation-extractor/
-├── src/
-│   ├── extractor/          # Core extraction logic
-│   ├── models/             # ML models and training
-│   ├── utils/              # Utility functions
-│   └── api/                # API endpoints
-├── tests/                  # Test files
-├── data/                   # Training and test data
-├── docs/                   # Documentation
-├── requirements.txt        # Python dependencies
-├── config.yaml            # Configuration file
-└── README.md              # This file
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+The `/ingest` endpoint processes documents and returns all legal clauses without obligation filtering. Useful for document segmentation and analysis without pre-filtering.
 
 ## Testing
 
-Run the test suite:
+The project includes a comprehensive test suite covering:
 
-```bash
-# Run all tests
-python -m pytest
+- API endpoint testing
+- Document parsing and ingestion
+- Legal document segmentation
+- Integration tests
+- End-to-end workflow tests
 
-# Run with coverage
-python -m pytest --cov=src
+Run tests using pytest from the backend directory.
 
-# Run specific test file
-python -m pytest tests/test_extractor.py
-```
+## Configuration
+
+The system uses environment-based configuration. Key settings include:
+
+- Pre-filter threshold (default: 0.35)
+- spaCy model selection
+- API CORS settings
+- Logging configuration
+
+## Features in Detail
+
+### Legal Document Segmentation
+
+The segmentation system identifies:
+- Section headings (numbered sections like "1. INTERPRETATION")
+- Subsections (numbered like "1.1", "2.1")
+- Definitions (numbered like "1.1.1")
+- Regular clauses with legal content
+
+### NLP Analysis
+
+Each clause is analyzed for:
+- **Entities**: Named entities including persons, organizations, dates, monetary amounts
+- **Obligation Verbs**: Legal obligation markers (shall, must, agrees to, etc.)
+- **Legal Patterns**: Structured patterns for obligations, prohibitions, monetary terms, definitions
+- **Confidence Scores**: Calculated based on presence of legal indicators
+
+### Pre-filtering Intelligence
+
+The pre-filter uses multiple signals:
+- **Positive Signals**: Obligation verbs, monetary amounts, deadlines, action verbs, obligation sections
+- **Negative Signals**: Definition patterns, non-obligation sections, very short clauses, numbering-only lines
+- **Scoring**: Weighted scoring system with configurable threshold
+
+## Development
+
+### Backend Development
+
+The backend follows FastAPI best practices with:
+- Modular route organization
+- Service layer separation
+- Comprehensive logging
+- Error handling and validation
+- Type hints throughout
+
+### Frontend Development
+
+The frontend uses:
+- Next.js App Router architecture
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Client-side form handling
+- API integration with error handling
+
+## Testing Strategy
+
+The test suite includes:
+- Unit tests for individual components
+- Integration tests for API endpoints
+- End-to-end tests for complete workflows
+- Document parsing tests for various formats
+- NLP segmentation tests
+- Pre-filtering logic tests
+
+## Future Enhancements
+
+Potential improvements and features:
+- PDF parsing implementation (currently placeholder)
+- Enhanced LLM integration for deeper analysis
+- Multi-language support
+- Advanced obligation classification
+- Export capabilities (JSON, CSV, Excel)
+- Document comparison features
+- Batch processing capabilities
+- Real-time processing status updates
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgments
 
-- Built with [spaCy](https://spacy.io/) for NLP processing
-- Uses [Transformers](https://huggingface.co/transformers/) for advanced text analysis
-- Web interface powered by [Flask](https://flask.palletsprojects.com/)
+- **spaCy**: Advanced NLP library for document processing
+- **FastAPI**: Modern Python web framework
+- **Next.js**: React framework for the frontend
+- **Tailwind CSS**: Utility-first CSS framework
 
 ## Support
 
-For questions, issues, or feature requests, please:
-
-1. Check the [Issues](https://github.com/yourusername/obligation-extractor/issues) page
-2. Create a new issue with detailed description
-3. Contact the maintainers at support@obligation-extractor.com
-
-## Roadmap
-
-- [ ] Support for more document formats (Word, RTF)
-- [ ] Multi-language support
-- [ ] Advanced obligation clustering
-- [ ] Real-time collaboration features
-- [ ] Integration with document management systems
+For questions, issues, or contributions:
+- Check existing issues in the repository
+- Create a new issue with detailed information
+- Follow the contribution guidelines
