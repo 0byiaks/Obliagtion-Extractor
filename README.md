@@ -4,7 +4,7 @@ A full-stack application for extracting and analyzing obligations from legal doc
 
 ## Overview
 
-The Obligation Extractor is a complete system designed to automatically identify, extract, and analyze obligations from legal documents including contracts, agreements, and policy documents. The system uses spaCy-based natural language processing to segment legal documents into clauses and intelligently filter for obligation-related content, reducing processing costs while maintaining high accuracy.
+The Obligation Extractor is a complete system designed to automatically identify, extract, and analyze obligations from legal documents including contracts, agreements, and policy documents. The system uses a hybrid approach combining spaCy-based natural language processing for initial segmentation and OpenAI LLM integration for advanced document analysis, with intelligent pre-filtering to reduce processing costs while maintaining high accuracy.
 
 ## Architecture
 
@@ -39,6 +39,7 @@ This is a full-stack application consisting of:
 ### Backend
 - **FastAPI**: Modern, fast web framework for building APIs
 - **spaCy**: Advanced NLP library for legal document processing
+- **OpenAI API**: Large Language Model integration for advanced document analysis
 - **python-docx**: DOCX file parsing
 - **Uvicorn**: ASGI server for FastAPI
 - **Pydantic**: Data validation and settings management
@@ -84,6 +85,7 @@ The project is organized into clear backend and frontend directories:
 - Node.js 18 or higher
 - npm or yarn package manager
 - spaCy English model (automatically downloaded on first run)
+- OpenAI API key (required for LLM features)
 
 ### Backend Setup
 
@@ -92,7 +94,10 @@ The project is organized into clear backend and frontend directories:
 3. Activate the virtual environment
 4. Install Python dependencies from requirements.txt
 5. Download spaCy English model if not already installed
-6. Start the FastAPI server using uvicorn
+6. Create a `.env` file in the backend directory with your OpenAI API key:
+   - `OPENAI_API_KEY=your_api_key_here`
+   - Optionally configure: `OPENAI_MODEL`, `OPENAI_MAX_TOKENS`, `OPENAI_TEMPERATURE`, `OPENAI_TIMEOUT`
+7. Start the FastAPI server using uvicorn
 
 The backend API will be available at `http://localhost:8000` by default.
 
@@ -121,7 +126,13 @@ The frontend application will be available at `http://localhost:3000` by default
    - Deadlines and timeframes
    - Section context
    - Negative signals (definitions, recitals)
-5. **Results**: Filtered clauses are returned with metadata, statistics, and confidence scores
+5. **Optional LLM Enhancement**: Selected clauses can be processed with OpenAI LLM for:
+   - Advanced section analysis
+   - Key term extraction
+   - Section classification
+   - Enhanced metadata extraction
+   - Structured text processing
+6. **Results**: Filtered clauses are returned with metadata, statistics, and confidence scores
 
 ### Pre-filtering System
 
@@ -131,6 +142,41 @@ The pre-filtering system uses heuristic-based scoring to identify obligation can
 - Penalizes non-obligation content (definitions, recitals, short clauses)
 - Provides confidence levels (high, medium, low)
 - Configurable threshold for filtering decisions
+
+### LLM Integration
+
+The system includes comprehensive LLM integration using OpenAI's API for advanced document analysis. The LLM services provide:
+
+**LLM Client Features:**
+- OpenAI API integration with configurable models (default: gpt-4o-mini)
+- JSON-structured responses for consistent data extraction
+- Token management and limit checking
+- Error handling with fallback mechanisms
+- Connection testing capabilities
+
+**LLM Segmentation Service:**
+- Document segmentation using LLM processing
+- Section-by-section analysis with context awareness
+- Automatic handling of long sections (splitting when needed)
+- Token-aware processing to stay within API limits
+- Structured output with metadata and processing statistics
+
+**LLM Processing Capabilities:**
+- Legal document section analysis
+- Key term extraction
+- Section type classification
+- Text cleaning and structuring
+- Summary generation
+- Metadata extraction (word counts, legal term detection, number detection)
+
+**LLM Configuration:**
+- Model selection (configurable via environment variables)
+- Temperature control for response consistency
+- Max tokens configuration
+- Timeout settings
+- JSON response format enforcement
+
+The LLM integration works in conjunction with the spaCy-based segmentation, providing a two-stage approach: initial NLP segmentation followed by optional LLM enhancement for deeper analysis.
 
 ## API Usage
 
@@ -160,8 +206,16 @@ Run tests using pytest from the backend directory.
 
 ## Configuration
 
-The system uses environment-based configuration. Key settings include:
+The system uses environment-based configuration via a `.env` file in the backend directory. Key settings include:
 
+**LLM Configuration:**
+- `OPENAI_API_KEY`: Required OpenAI API key for LLM features
+- `OPENAI_MODEL`: Model to use (default: "gpt-4o-mini")
+- `OPENAI_MAX_TOKENS`: Maximum tokens per request (default: 1200)
+- `OPENAI_TEMPERATURE`: Response temperature (default: 0.1)
+- `OPENAI_TIMEOUT`: Request timeout in seconds (default: 30)
+
+**Processing Configuration:**
 - Pre-filter threshold (default: 0.35)
 - spaCy model selection
 - API CORS settings
@@ -226,13 +280,14 @@ The test suite includes:
 
 Potential improvements and features:
 - PDF parsing implementation (currently placeholder)
-- Enhanced LLM integration for deeper analysis
+- Direct LLM integration in main extraction pipeline
 - Multi-language support
 - Advanced obligation classification
 - Export capabilities (JSON, CSV, Excel)
 - Document comparison features
 - Batch processing capabilities
 - Real-time processing status updates
+- LLM-based obligation extraction and classification
 
 ## License
 
@@ -241,6 +296,7 @@ This project is licensed under the MIT License.
 ## Acknowledgments
 
 - **spaCy**: Advanced NLP library for document processing
+- **OpenAI**: Large Language Model API for advanced document analysis
 - **FastAPI**: Modern Python web framework
 - **Next.js**: React framework for the frontend
 - **Tailwind CSS**: Utility-first CSS framework
